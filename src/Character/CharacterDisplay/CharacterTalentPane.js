@@ -88,10 +88,10 @@ const ReactionComponents = {
   shattered_hit: ShatteredCard,
   crystalize_hit: CrystalizeCard,
 }
-function ReactionDisplay({ character: { characterKey, reactionMode = "none" }, newBuild, equippedBuild, setState }) {
-  let build = newBuild ? newBuild : equippedBuild
-  let charEleKey = Character.getElementalKey(characterKey)
-  let eleInterArr = [...(ElementToReactionKeys[charEleKey] || [])]
+function ReactionDisplay({ character: { characterKey }, newBuild, equippedBuild }) {
+  const build = newBuild ? newBuild : equippedBuild
+  const charEleKey = Character.getElementalKey(characterKey)
+  const eleInterArr = [...(ElementToReactionKeys[charEleKey] || [])]
   if (!eleInterArr.includes("shattered_hit") && Character.getWeaponTypeKey(characterKey) === "claymore") eleInterArr.push("shattered_hit")
   return <Card bg="lightcontent" text="lightfont" className="mb-2">
     <Card.Body className="px-3 py-2">
@@ -141,7 +141,7 @@ function SwirlCard({ stats }) {
   </Card.Body></Card>
 }
 function ShatteredCard({ stats }) {
-  const sKey = "electrocharged_hit"
+  const sKey = "shattered_hit"
   const information = <OverlayTrigger
     placement="top"
     overlay={<Tooltip>Claymores, Plunging Attacks and <span className="text-geo">Geo DMG</span></Tooltip>}
@@ -247,7 +247,7 @@ function SkillDisplayCard(props) {
   return <Card bg="lightcontent" text="lightfont" className="h-100">
     {header}
     <Card.Body>
-      <Row className="d-flex flex-row mb-245" onClick={onClickTitle} style={{ cursor: (editable && onClickTitle) ? "pointer" : "default" }}>
+      <Row className={`d-flex flex-row mb-2 ${(editable && onClickTitle) ? "cursor-pointer" : ""}`} onClick={onClickTitle} >
         <Col xs="auto" className="flex-shrink-1 d-flex flex-column">
           <Image src={Character.getTalentImg(characterKey, talentKey)} className="thumb-mid" />
         </Col>
