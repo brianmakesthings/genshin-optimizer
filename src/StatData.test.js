@@ -47,7 +47,7 @@ describe(`Testing StatData`, () => {
     })
     test("should match Stat", () => {
       //checks for development
-      expect(new Set(Object.keys(Formulas))).toEqual(new Set(Object.keys(FormulaText)))
+      expect(Object.keys(Formulas)).toEqual(expect.arrayContaining(Object.keys(FormulaText)))
       expect(Object.keys(StatData)).toEqual(expect.arrayContaining(Object.keys(Formulas)))
     })
   })
