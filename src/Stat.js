@@ -1,4 +1,4 @@
-import { Formulas, StatData } from "./StatData"
+import { StatData } from "./StatData"
 import { ReactionMatrix, hitTypes, hitMoves, hitElements, transformativeReactions, amplifyingReactions } from "./StatConstants"
 
 export default class Stat {
@@ -71,22 +71,37 @@ function reactionMatrixElementRenderer(o, val, i) {
   return <span key={i}>{sign}{disVal}{powerText}</span>
 }
 
-// Base Formula
-
-const FormulaText = {
+export const FormulaText = {
   baseATK: (o) => <span>{f(o, "characterATK")} + {f(o, "weaponATK")} </span>,
   finalATK: (o) => <span>{f(o, "baseATK")} * ( 100% + {f(o, "atk_")} ) + {f(o, "atk")}</span>,
   finalHP: (o) => <span>{f(o, "characterHP")} * ( 100% + {f(o, "hp_")} ) + {f(o, "hp")}</span>,
   finalDEF: (o) => <span>{f(o, "characterDEF")} * ( 100% + {f(o, "def_")} ) + {f(o, "def")}</span>,
 
+  enemyLevel_multi: (o) => <span>( 100 + {f(o, "characterLevel")} ) / ( ( 100 + {f(o, "characterLevel")} ) + ( 100 + {f(o, "enemyLevel")} ) * ( 100% - {f(o, "enemyDEFRed_")} ) )</span>,
+
   heal_multi: (o) => <span>( 100% + {f(o, "heal_")} + {f(o, "incHeal_")} )</span>,
 
-  enemyLevel_multi: (o) => <span>( 100 + {f(o, "characterLevel")} ) / ( ( 100 + {f(o, "characterLevel")} ) + ( 100 + {f(o, "enemyLevel")} ) * ( 100% - {f(o, "enemyDEFRed_")} ) )</span>,
+  amplificative_dmg_: (o) => <span>25 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
+  transformative_dmg_: (o) => <span>60 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
+
+  crystalize_eleMas_: (o) => <span>40 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
+  crystalize_multi: (o) => ReactionMatrix["crystalize"].map((val, i) => reactionMatrixElementRenderer(o, val, i)),
+  crystalize_hit: (o) => <span>( 100% + {f(o, "crystalize_dmg_")} + {f(o, "crystalize_eleMas_")} ) * {f(o, "crystalize_multi")}</span>,
 }
 
-// Enemy RES
+Object.entries(hitMoves).forEach(([move, moveName]) => {
+  FormulaText[`final_${move}_critRate_`] = (o) => <span>Min( {f(o, "critRate_")} + {f(o, `${move}_critRate_`)} , 100% )</span>
+})
 
 Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
+  Object.entries(hitTypes).forEach(([type, typeName]) => {
+    FormulaText[`${ele}_elemental_${type}`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_elemental_${type}_multi`)}</span>
+  })
+
+  FormulaText[`${ele}_elemental_hit_multi`] = (o) => <span>( 100% + {f(o, `dmg_`)} * {f(o, `${ele}_dmg_`)} ) * {f(o, `enemyLevel_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>
+  FormulaText[`${ele}_elemental_critHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
+  FormulaText[`${ele}_elemental_avgHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} * {f(o, `critRate_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
+
   FormulaText[`${ele}_enemyRes_multi`] = (o) => {
     if (o.stats[`${ele}_enemyImmunity`])
       return <span>0 (immune)</span>
@@ -97,54 +112,17 @@ Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
   }
 })
 
-// Crit Rate
-
 Object.entries(hitMoves).forEach(([move, moveName]) => {
-  FormulaText[`final_${move}_critRate_`] = (o) => <span>Min( {f(o, "critRate_")} + {f(o, `${move}_critRate_`)} , 100% )</span>
-})
-
-// Hit
-
-Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
-  FormulaText[`${ele}_elemental_hit_multi`] = (o) => <span>( 100% + {f(o, `dmg_`)} * {f(o, `${ele}_dmg_`)} ) * {f(o, `enemyLevel_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>
-  FormulaText[`${ele}_elemental_hit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_elemental_hit_multi`)}</span>
-  FormulaText[`${ele}_elemental_critHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
-  FormulaText[`${ele}_elemental_critHit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_elemental_critHit_multi`)}</span>
-  FormulaText[`${ele}_elemental_avgHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} * {f(o, `critRate_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
-  FormulaText[`${ele}_elemental_avgHit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_elemental_avgHit_multi`)}</span>
-
-  Object.entries(hitMoves).forEach(([move, moveName]) => {
-    FormulaText[`${ele}_${move}_hit_multi`] = (o) => <span>( 100% + {f(o, `dmg_`)} + {f(o, `${ele}_dmg_`)} + {f(o, `${move}_dmg_`)} ) * {f(o, `enemyLevel_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>
-    FormulaText[`${ele}_${move}_hit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_${move}_hit_multi`)}</span>
-    FormulaText[`${ele}_${move}_critHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} ) * {f(o, `${ele}_${move}_hit_multi`)}</span>
-    FormulaText[`${ele}_${move}_critHit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_${move}_critHit_multi`)}</span>
-    FormulaText[`${ele}_${move}_avgHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} * {f(o, `final_${move}_critRate_`)} ) * {f(o, `${ele}_${move}_hit_multi`)}</span>
-    FormulaText[`${ele}_${move}_avgHit`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_${move}_avgHit_multi`)}</span>
-  })
-})
-
-// Reaction
-
-Object.assign(FormulaText, {
-  amplificative_dmg_: (o) => <span>25 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
-})
-Object.entries(amplifyingReactions).forEach(([reaction, { variants }]) => {
-  Object.entries(variants).forEach(([ele, baseMulti]) => {
-    // Move them to the right position
-    FormulaText[`${ele}_${reaction}_multi`] = (o) => <span>{baseMulti} * ( 100% + {f(o, "amplificative_dmg_")} + {f(o, `${reaction}_dmg_`)} )</span>
-
+  Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
     Object.entries(hitTypes).forEach(([type, typeName]) => {
-      FormulaText[`${ele}_${reaction}_elemental_${type}`] = (o) => <span>{f(o, `${ele}_elemental_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
-      Object.entries(hitMoves).forEach(([move, moveName]) => {
-        FormulaText[`${ele}_${reaction}_${move}_${type}`] = (o) => <span>{f(o, `${ele}_${move}_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
-      })
+      FormulaText[`${ele}_${move}_${type}`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_${move}_${type}_multi`)}</span>
     })
+    FormulaText[`${ele}_${move}_hit_multi`] = (o) => <span>( 100% + {f(o, `dmg_`)} + {f(o, `${ele}_dmg_`)} + {f(o, `${move}_dmg_`)} ) * {f(o, `enemyLevel_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>
+    FormulaText[`${ele}_${move}_critHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} ) * {f(o, `${ele}_${move}_hit_multi`)}</span>
+    FormulaText[`${ele}_${move}_avgHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} * {f(o, `final_${move}_critRate_`)} ) * {f(o, `${ele}_${move}_hit_multi`)}</span>
   })
 })
 
-Object.assign(FormulaText, {
-  transformative_dmg_: (o) => <span>60 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
-})
 Object.entries(transformativeReactions).forEach(([reaction, { variants }]) => {
   FormulaText[`${reaction}_multi`] = (o) => ReactionMatrix[reaction].map((val, i) => reactionMatrixElementRenderer(o, val, i))
   if (Object.entries(variants).length === 1) {
@@ -156,16 +134,15 @@ Object.entries(transformativeReactions).forEach(([reaction, { variants }]) => {
     })    
   }
 })
-Object.assign(FormulaText, {
-  crystalize_eleMas_: (o) => <span>40 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
-  crystalize_multi: (o) => ReactionMatrix["crystalize"].map((val, i) => reactionMatrixElementRenderer(o, val, i)),
-  crystalize_hit: (o) => <span>( 100% + {f(o, "crystalize_dmg_")} + {f(o, "crystalize_eleMas_")} ) * {f(o, "crystalize_multi")}</span>,
-})
 
-//checks for development
-process.env.NODE_ENV === "development" && Object.keys(Formulas).forEach(key => {
-  if (!FormulaText[key]) console.error(`Formula "${key}" does not have a corresponding entry in FormulaText`)
-})
-process.env.NODE_ENV === "development" && Object.keys(Formulas).forEach(key => {
-  if (!StatData[key]) console.error(`Formula "${key}" does not have a corresponding entry in StatData`)
+Object.entries(amplifyingReactions).forEach(([reaction, { variants }]) => {
+  Object.entries(variants).forEach(([ele, baseMulti]) => {
+    FormulaText[`${ele}_${reaction}_multi`] = (o) => <span>{baseMulti} * ( 100% + {f(o, "amplificative_dmg_")} + {f(o, `${reaction}_dmg_`)} )</span>
+    Object.entries(hitTypes).forEach(([type, typeName]) => {
+      FormulaText[`${ele}_${reaction}_elemental_${type}`] = (o) => <span>{f(o, `${ele}_elemental_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
+      Object.entries(hitMoves).forEach(([move, moveName]) => {
+        FormulaText[`${ele}_${reaction}_${move}_${type}`] = (o) => <span>{f(o, `${ele}_${move}_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
+      })
+    })
+  })
 })
