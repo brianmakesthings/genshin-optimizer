@@ -169,6 +169,8 @@ const char = {
         }, {
           text: "Energy Cost",
           value: 60,
+        }, (con) => con >= 2 && {
+          text: "Apply the Blood Blossom effect",
         }]
       }],
     },
