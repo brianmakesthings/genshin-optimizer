@@ -43,7 +43,7 @@ function burDMG(percent, stats, skillKey, stacks, elemental = false) {
   const val = percent / 100
   const statKey = getTalentStatKey(skillKey, stats, elemental) + "_multi"
   void 0 === stacks && (stacks = 0);
-  return [s => (val * s.finalATK + stacks * 0.3 * s.finalDEF) * s[statKey], ["finalATK", "finalDEF", statKey, stacks]]
+  return [s => (val * s.finalATK + stacks * 0.3 * s.finalDEF) * s[statKey], ["finalATK", "finalDEF", statKey]]
 }
 
 function blossomDMG(percent, multi, stats, skillKey, elemental = false) {
@@ -54,7 +54,7 @@ function blossomDMG(percent, multi, stats, skillKey, elemental = false) {
     "geo_skill_critHit": (1 + stats.critDMG_ / 100),
     "geo_skill_avgHit": (1 + stats.critDMG_ * stats.final_skill_critRate_ / 10000),
   }[statKey] || 1
-  return [s => val * s.finalDEF * geo_skill_hit_multi * finalMultiplier, ["finalDef"]]
+  return [s => val * s.finalDEF * geo_skill_hit_multi * finalMultiplier, ["finalDEF"]]
 }
 
 const formula = {
