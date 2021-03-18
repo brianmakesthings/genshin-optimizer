@@ -39,22 +39,11 @@ const data = {
     blossom: [72, 77.4, 82.8, 90, 95.4, 100.8, 108, 115.2, 122.4, 129.6, 136.8, 144, 153, 162, 171]
   }
 }
-function burDMG(percent, stats, skillKey, stacks, elemental = false) {
+function burDMG(percent, stats, skillKey, stacks = 0, elemental = false) {
   const val = percent / 100
   const statKey = getTalentStatKey(skillKey, stats, elemental) + "_multi"
-  void 0 === stacks && (stacks = 0);
-  return [s => (val * s.finalATK + stacks * 0.3 * s.finalDEF) * s[statKey], ["finalATK", "finalDEF", statKey]]
-}
-
-function blossomDMG(percent, multi, stats, skillKey, elemental = false) {
-  const val = percent / 100
-  const statKey = getTalentStatKey(skillKey, stats, elemental)
-  const geo_skill_hit_multi = (1 + (stats.dmg_ + stats.geo_dmg_ + stats.skill_dmg_ + multi) / 100) * stats.enemyLevel_multi * stats.geo_enemyRes_multi
-  const finalMultiplier = {
-    "geo_skill_critHit": (1 + stats.critDMG_ / 100),
-    "geo_skill_avgHit": (1 + stats.critDMG_ * stats.final_skill_critRate_ / 10000),
-  }[statKey] || 1
-  return [s => val * s.finalDEF * geo_skill_hit_multi * finalMultiplier, ["finalDEF"]]
+  const stacksVal = stacks * 0.3
+  return [s => (val * s.finalATK + stacksVal * s.finalDEF) * s[statKey], ["finalATK", "finalDEF", statKey]]
 }
 
 const formula = {
@@ -68,16 +57,25 @@ const formula = {
   plunging: Object.fromEntries(Object.entries(data.plunging).map(([key, arr]) => [key, (tlvl, stats) => basicDMGFormula(arr[tlvl], stats, "plunging")])),
   skill: {
     press: (tlvl, stats) => basicDMGFormula(data.skill.press[tlvl], stats, "skill"),
-    blossom: (tlvl, stats) => blossomDMG(data.skill.blossom[tlvl], 0, stats, "skill"),
-    blossom50: (tlvl, stats) => blossomDMG(data.skill.blossom[tlvl], 25, stats, "skill")
+    blossom: (tlvl, stats) => {
+      const val = data.skill.blossom[tlvl] / 100
+      const statKey = getTalentStatKey("skill", stats) + "_multi"
+      return [s => val * s.finalDEF * s[statKey], ["finalDEF", statKey]]
+    },
+    blossom50: (tlvl, stats) => {
+      const val = data.skill.blossom[tlvl] / 100
+      const hitModeMultiKey = stats.hitMode === "avgHit" ? "skill_avgHit_base_multi" : stats.hitMode === "critHit" ? "critHit_base_multi" : ""
+      return [s => val * s.finalDEF * (hitModeMultiKey ? s[hitModeMultiKey] : 1) * (s.geo_skill_hit_base_multi + 0.25) * s.enemyLevel_multi * s.geo_enemyRes_multi,
+      ["finalDEF", ...(hitModeMultiKey ? [hitModeMultiKey] : []), "geo_skill_hit_base_multi", "enemyLevel_multi", "geo_enemyRes_multi"]]
+    }
   },
   burst: {
-    dmg: (tlvl, stats) => burDMG(data.burst.dmg[tlvl], stats, "burst"),
+    dmg: (tlvl, stats) => basicDMGFormula(data.burst.dmg[tlvl], stats, "burst"),
     dmg1c2: (tlvl, stats) => burDMG(data.burst.dmg[tlvl], stats, "burst", 1),
     dmg2c2: (tlvl, stats) => burDMG(data.burst.dmg[tlvl], stats, "burst", 2),
     dmg3c2: (tlvl, stats) => burDMG(data.burst.dmg[tlvl], stats, "burst", 3),
     dmg4c2: (tlvl, stats) => burDMG(data.burst.dmg[tlvl], stats, "burst", 4),
-    blossom: (tlvl, stats) => burDMG(data.burst.blossom[tlvl], stats, "burst",),
+    blossom: (tlvl, stats) => basicDMGFormula(data.burst.blossom[tlvl], stats, "burst"),
     blossom1c2: (tlvl, stats) => burDMG(data.burst.blossom[tlvl], stats, "burst", 1),
     blossom2c2: (tlvl, stats) => burDMG(data.burst.blossom[tlvl], stats, "burst", 2),
     blossom3c2: (tlvl, stats) => burDMG(data.burst.blossom[tlvl], stats, "burst", 3),

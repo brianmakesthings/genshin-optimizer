@@ -100,13 +100,16 @@ const char = {
           variant: (tlvl, stats) => getTalentStatKeyVariant("skill", stats),
         }, {
           text: "Transient Blossom DMG",
-          formulaText: (tlvl, stats) => <span>{data.skill.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("skill", stats), stats)}</span>,
+          formulaText: (tlvl, stats) => <span>{data.skill.blossom[tlvl]}% {Stat.printStat("finalDEF", stats)} * {Stat.printStat(getTalentStatKey("skill", stats) + "_multi", stats)}</span>,
           formula: formula.skill.blossom,
           variant: (tlvl, stats) => getTalentStatKeyVariant("skill", stats),
         },
         (con, a) => a >= 1 && {
           text: "Transient Blossom DMG <50 HP",
-          formulaText: (tlvl, stats) => <span>{data.skill.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("skill", stats), stats)} + 25%</span>,
+          formulaText: (tlvl, stats) => {
+            const hitModeMultiKey = stats.hitMode === "avgHit" ? "skill_avgHit_base_multi" : stats.hitMode === "critHit" ? "critHit_base_multi" : ""
+            return < span >{data.skill.blossom[tlvl]}% {Stat.printStat("finalDEF", stats)} * {(hitModeMultiKey ? <span>{Stat.printStat(hitModeMultiKey, stats)} * </span> : "")}( {Stat.printStat("geo_skill_hit_base_multi", stats)} + 25%) * {Stat.printStat("enemyLevel_multi", stats)} * {Stat.printStat("geo_enemyRes_multi", stats)}</span >
+          },
           formula: formula.skill.blossom50,
           variant: (tlvl, stats) => getTalentStatKeyVariant("skill", stats),
         }]
@@ -120,65 +123,29 @@ const char = {
           <p className="mb-2">Under Albedo's command, Geo crystals surge and burst forth, dealing AoE Geo DMG in front of him. If a <strong>Solar Isotoma</strong> created by Albedo himself is on the field, 7 Fatal Blossoms will be generated in the Solar Isotoma field, bursting violently into bloom and dealing AoE Geo DMG. Tectonic Tide DMG and Fatal Blossom DMG will not generate Transient Blossoms.</p>
         </span>,
         fields: [{
-          text: "Brust DMG",
+          text: "Burst DMG",
           formulaText: (tlvl, stats) => <span>{data.burst.dmg[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)}</span>,
           formula: formula.burst.dmg,
           variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
         },
-        (con, a) => con >= 2 && {
-          text: "Brust DMG C2 1 Stack",
-          formulaText: (tlvl, stats) => <span>{data.burst.dmg[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")}</span>,
-          formula: formula.burst.dmg1c2,
+        ...[...Array(4).keys()].map(i => i + 1).map(i => (con, a) => con >= 2 && {
+          text: `Burst DMG C2 ${i} Stack`,
+          formulaText: (tlvl, stats) => <span>( {data.burst.dmg[tlvl]}% {Stat.printStat("finalATK", stats)} + {30 * i}% {Stat.printStat("finalDEF", stats)}) * {Stat.printStat(getTalentStatKey("burst", stats) + "_multi", stats)}</span>,
+          formula: formula.burst[`dmg${i}c2`],
           variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Brust DMG C2 2 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.dmg[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 2</span>,
-          formula: formula.burst.dmg2c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Brust DMG C2 3 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.dmg[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 3</span>,
-          formula: formula.burst.dmg3c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Brust DMG C2 4 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.dmg[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 4</span>,
-          formula: formula.burst.dmg4c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
+        }),
         {
           text: "Fatal Blossom DMG",
           formulaText: (tlvl, stats) => <span>{data.burst.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)}</span>,
           formula: formula.burst.blossom,
           variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
         },
-        (con, a) => con >= 2 && {
-          text: "Fatal Blossom DMG C2 1 Stack",
-          formulaText: (tlvl, stats) => <span>{data.burst.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")}</span>,
-          formula: formula.burst.blossom1c2,
+        ...[...Array(4).keys()].map(i => i + 1).map(i => (con, a) => con >= 2 && {
+          text: `Fatal Blossom DMG C2 ${i} Stack`,
+          formulaText: (tlvl, stats) => <span>( {data.burst.blossom[tlvl]}% {Stat.printStat("finalATK", stats)} + {30 * i}% {Stat.printStat("finalDEF", stats)}) * {Stat.printStat(getTalentStatKey("burst", stats) + "_multi", stats)}</span>,
+          formula: formula.burst[`blossom${i}c2`],
           variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Fatal Blossom DMG C2 2 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 2</span>,
-          formula: formula.burst.blossom2c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Fatal Blossom DMG C2 3 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 3</span>,
-          formula: formula.burst.blossom3c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        },
-        (con, a) => con >= 2 && {
-          text: "Fatal Blossom DMG C2 4 Stacks",
-          formulaText: (tlvl, stats) => <span>{data.burst.blossom[tlvl]}% {Stat.printStat(getTalentStatKey("burst", stats), stats)} + {DisplayPercent(30, stats, "finalDEF")} * 4</span>,
-          formula: formula.burst.blossom4c2,
-          variant: (tlvl, stats) => getTalentStatKeyVariant("burst", stats),
-        }]
+        })]
       }],
     },
     passive1: {
@@ -225,17 +192,7 @@ const char = {
             <li>Unleashing <strong>Progeniture: Tectonic Tide</strong> consumes all stacks of <strong>Fatal Reckoning</strong>. Each stack of <strong>Fatal Reckoning</strong> consumed increases the DMG dealt by <strong>Fatal Blossoms</strong> and <strong>Progeniture: Tectonic Tide</strong>'s burst DMG by 30% of Albedo's DEF{DisplayPercent(30, stats, "finalDEF")}.</li>
             <li>This effect stacks up to 4 times.</li>
           </ul>
-        </span>/* ,
-        conditional: (tlvl, c, a) => c >= 2 && {
-          type: "character",
-          conditionalKey: "FatalReckoning",
-          condition: "Fatal Reckoning",
-          sourceKey: "albedo",
-          maxStack: 4,
-          stats: {
-            modifiers: { geo_burst_hit: { finalDEF: 0.3 } },//This was the only way i could make it calculate the correct value but it isnt added and does not stack
-          }//TODO: frzyc
-        }*/
+        </span>
       }],
     },
     constellation3: {

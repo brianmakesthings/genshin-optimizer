@@ -137,7 +137,7 @@ Object.entries(hitMoves).forEach(([move, moveName]) => {
   Formulas[`${move}_avgHit_base_multi`] = (s) => (1 + s.critDMG_ * s[`final_${move}_critRate_`] / 10000)
   Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
     const opt = { variant: ele }
-    StatData[`${ele}_${move}_hit_base_multi`] = { name: `${moveName} Base Multiplier`, ...opt }
+    StatData[`${ele}_${move}_hit_base_multi`] = { name: `${moveName} Base Multiplier`, ...opt, unit: "multi" }
     Formulas[`${ele}_${move}_hit_base_multi`] = (s, c) => (100 + s.dmg_ + s[`${ele}_dmg_`] + s[`${move}_dmg_`]) / 100
     Object.entries(hitTypes).forEach(([type, typeName]) => {
       StatData[`${ele}_${move}_${type}`] = { name: `${moveName} ${typeName}`, ...opt }
