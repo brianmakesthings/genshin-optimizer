@@ -1,7 +1,7 @@
 import ElementalData from "./Data/ElementalData";
 
 export const hitTypes = { hit: "DMG", avgHit: "Avg. DMG", critHit: "CRIT Hit DMG" }
-export const hitMoves = { normal: "Normal Att.", charged: "Charged Att.", plunging: "Plunging Att.", skill: "Ele. Skill", burst: "Ele. Burst" }
+export const hitMoves = { normal: "Normal Att.", charged: "Charged Att.", plunging: "Plunging Att.", elemental: "Elemental Att.", skill: "Ele. Skill", burst: "Ele. Burst" }
 export const hitElements = ElementalData
 export const transformativeReactions = {
   overloaded: { name: "Overloaded", variants: { pyro: 4 } },

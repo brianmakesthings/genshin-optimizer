@@ -94,14 +94,6 @@ Object.entries(hitMoves).forEach(([move, moveName]) => {
 })
 
 Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
-  Object.entries(hitTypes).forEach(([type, typeName]) => {
-    FormulaText[`${ele}_elemental_${type}`] = (o) => <span>{f(o, `finalATK`)} * {f(o, `${ele}_elemental_${type}_multi`)}</span>
-  })
-
-  FormulaText[`${ele}_elemental_hit_multi`] = (o) => <span>( 100% + {f(o, `dmg_`)} * {f(o, `${ele}_dmg_`)} ) * {f(o, `enemyLevel_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>
-  FormulaText[`${ele}_elemental_critHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
-  FormulaText[`${ele}_elemental_avgHit_multi`] = (o) => <span>( 100% + {f(o, `critDMG_`)} * {f(o, `critRate_`)} ) * {f(o, `${ele}_elemental_hit_multi`)}</span>
-
   FormulaText[`${ele}_enemyRes_multi`] = (o) => {
     if (o.stats[`${ele}_enemyImmunity`])
       return <span>0 (immune)</span>
@@ -139,7 +131,6 @@ Object.entries(amplifyingReactions).forEach(([reaction, { variants }]) => {
   Object.entries(variants).forEach(([ele, baseMulti]) => {
     FormulaText[`${ele}_${reaction}_multi`] = (o) => <span>{baseMulti} * ( 100% + {f(o, "amplificative_dmg_")} + {f(o, `${reaction}_dmg_`)} )</span>
     Object.entries(hitTypes).forEach(([type, typeName]) => {
-      FormulaText[`${ele}_${reaction}_elemental_${type}`] = (o) => <span>{f(o, `${ele}_elemental_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
       Object.entries(hitMoves).forEach(([move, moveName]) => {
         FormulaText[`${ele}_${reaction}_${move}_${type}`] = (o) => <span>{f(o, `${ele}_${move}_${type}`)} * {f(o, `${ele}_${reaction}_multi`)}</span>
       })
