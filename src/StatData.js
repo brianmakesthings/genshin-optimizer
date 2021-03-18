@@ -31,6 +31,8 @@ const StatData = {
   finalATK: { name: "ATK", pretty: "ATK" },
   finalDEF: { name: "DEF", pretty: "DEF" },
 
+  critHit_base_multi: { name: `Crit Multiplier`, unit: "multi" },
+
   eleMas: { name: "Elemental Mastery", },
   enerRech_: { name: "Energy Recharge", unit: "%", default: 100 },
   critRate_: { name: "CRIT Rate", unit: "%", default: 5 },
@@ -74,6 +76,8 @@ const Formulas = {
   finalATK: (s, c) => c.baseATK * (1 + s.atk_ / 100) + s.atk,
   finalHP: (s, c) => c.characterHP * (1 + s.hp_ / 100) + s.hp,
   finalDEF: (s, c) => c.characterDEF * (1 + s.def_ / 100) + s.def,
+
+  critHit_base_multi: (s) => (1 + s.critDMG_ / 100),
 
   enemyLevel_multi: (s, c) => (100 + c.characterLevel) / ((100 + c.characterLevel) + (100 + c.enemyLevel) * (1 - c.enemyDEFRed_ / 100)),
 
@@ -129,18 +133,21 @@ Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
 })
 
 Object.entries(hitMoves).forEach(([move, moveName]) => {
+  StatData[`${move}_avgHit_base_multi`] = { name: `${moveName} Avg. Multiplier`, unit: "multi" }
+  Formulas[`${move}_avgHit_base_multi`] = (s) => (1 + s.critDMG_ * s[`final_${move}_critRate_`] / 10000)
   Object.entries(hitElements).forEach(([ele, { name: eleName }]) => {
     const opt = { variant: ele }
+    StatData[`${ele}_${move}_hit_base_multi`] = { name: `${moveName} Base Multiplier`, ...opt }
+    Formulas[`${ele}_${move}_hit_base_multi`] = (s, c) => (100 + s.dmg_ + s[`${ele}_dmg_`] + s[`${move}_dmg_`]) / 100
     Object.entries(hitTypes).forEach(([type, typeName]) => {
       StatData[`${ele}_${move}_${type}`] = { name: `${moveName} ${typeName}`, ...opt }
-      StatData[`${ele}_${move}_${type}_multi`] = { name: `${moveName} ${typeName} Multiplier`, unit: "multi", ...opt }
-
       Formulas[`${ele}_${move}_${type}`] = (s) => s.finalATK * s[`${ele}_${move}_${type}_multi`]
+      StatData[`${ele}_${move}_${type}_multi`] = { name: `${moveName} ${typeName} Multiplier`, unit: "multi", ...opt }
     })
 
-    Formulas[`${ele}_${move}_hit_multi`] = (s, c) => (1 + (s.dmg_ + s[`${ele}_dmg_`] + s[`${move}_dmg_`]) / 100) * c.enemyLevel_multi * c[`${ele}_enemyRes_multi`]
-    Formulas[`${ele}_${move}_critHit_multi`] = (s) => s[`${ele}_${move}_hit_multi`] * (1 + s.critDMG_ / 100)
-    Formulas[`${ele}_${move}_avgHit_multi`] = (s) => s[`${ele}_${move}_hit_multi`] * (1 + s.critDMG_ * s[`final_${move}_critRate_`] / 10000)
+    Formulas[`${ele}_${move}_hit_multi`] = (s, c) => s[`${ele}_${move}_hit_base_multi`] * c.enemyLevel_multi * c[`${ele}_enemyRes_multi`]
+    Formulas[`${ele}_${move}_critHit_multi`] = (s) => s[`${ele}_${move}_hit_multi`] * s[`critHit_base_multi`]
+    Formulas[`${ele}_${move}_avgHit_multi`] = (s) => s[`${ele}_${move}_hit_multi`] * s[`${move}_avgHit_base_multi`]
   })
 })
 
@@ -148,7 +155,6 @@ Object.entries(transformativeReactions).forEach(([reaction, { name, variants }])
   const opt = { variant: reaction }
   StatData[`${reaction}_dmg_`] = { name: `${name} DMG Bonus`, unit: "%", ...opt }
   StatData[`${reaction}_multi`] = { name: `${name} Multiplier`, unit: "multi", const: true, ...opt }
-
   Formulas[`${reaction}_multi`] = (s, c) => ReactionMatrix[reaction].reduce((accu, val, i) => accu + val * Math.pow(c.characterLevel, i), 0)
   if (Object.keys(variants).length === 1) {
     const [ele] = Object.keys(variants), opt = { variant: reaction }
