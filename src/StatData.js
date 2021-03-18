@@ -180,8 +180,11 @@ Object.entries(amplifyingReactions).forEach(([reaction, { name, variants }]) => 
     Formulas[`${ele}_${reaction}_multi`] = (s) => baseMulti * (100 + s.amplificative_dmg_ + s[`${reaction}_dmg_`]) / 100
     Object.entries(hitTypes).forEach(([type, typeName]) => {
       Object.entries(hitMoves).forEach(([move, moveName]) => {
+        StatData[`${ele}_${reaction}_${move}_${type}_multi`] = { name: `${name} ${moveName} ${typeName} Multiplier`, unit: "multi", ...opt }
         StatData[`${ele}_${reaction}_${move}_${type}`] = { name: `${name} ${moveName} ${typeName}`, ...opt }
-        Formulas[`${ele}_${reaction}_${move}_${type}`] = (s) => s[`${ele}_${move}_${type}`] * s[`${ele}_${reaction}_multi`]
+
+        Formulas[`${ele}_${reaction}_${move}_${type}_multi`] = (s) => s[`${ele}_${move}_${type}_multi`] * s[`${ele}_${reaction}_multi`]
+        Formulas[`${ele}_${reaction}_${move}_${type}`] = (s) => s.finalATK * s[`${ele}_${reaction}_${move}_${type}_multi`]
       })
     })
   })
