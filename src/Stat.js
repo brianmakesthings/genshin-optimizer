@@ -1,5 +1,5 @@
 import { StatData } from "./StatData"
-import { ReactionMatrix, hitTypes, hitMoves, hitElements, transformativeReactions, amplifyingReactions } from "./StatConstants"
+import { hitTypes, hitMoves, hitElements, transformativeReactions, amplifyingReactions } from "./StatConstants"
 
 export default class Stat {
   //do not instantiate.
@@ -61,15 +61,6 @@ function f(options, statKey) {
   return <span className="text-nowrap"><b>{statName}</b> <span className="text-info">{value}{statUnit}</span></span>
 }
 
-function reactionMatrixElementRenderer(o, val, i) {
-  let sign = val < 0 ? " - " : " + ";
-  let disVal = Math.abs(val)
-  let powerText = ""
-  if (i > 1) powerText = <span> * ( {f(o, "characterLevel")} )^{i}</span>
-  if (i === 1) powerText = <span> * {f(o, "characterLevel")}</span>
-  return <span key={i}>{sign}{disVal}{powerText}</span>
-}
-
 export const FormulaText = {
   baseATK: (o) => <span>{f(o, "characterATK")} + {f(o, "weaponATK")} </span>,
   finalATK: (o) => <span>{f(o, "baseATK")} * ( 100% + {f(o, "atk_")} ) + {f(o, "atk")}</span>,
@@ -84,7 +75,6 @@ export const FormulaText = {
   transformative_dmg_: (o) => <span>60 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
 
   crystalize_eleMas_: (o) => <span>40 / 9 * {f(o, "eleMas")} / ( 1400 + {f(o, "eleMas")} ) * 100%</span>,
-  crystalize_multi: (o) => ReactionMatrix["crystalize"].map((val, i) => reactionMatrixElementRenderer(o, val, i)),
   crystalize_hit: (o) => <span>( 100% + {f(o, "crystalize_dmg_")} + {f(o, "crystalize_eleMas_")} ) * {f(o, "crystalize_multi")}</span>,
 }
 
@@ -119,13 +109,13 @@ Object.entries(hitMoves).forEach(([move, moveName]) => {
   })
 })
 
-Object.entries(transformativeReactions).forEach(([reaction, { variants }]) => {
-  FormulaText[`${reaction}_multi`] = (o) => ReactionMatrix[reaction].map((val, i) => reactionMatrixElementRenderer(o, val, i))
-  if (Object.entries(variants).length === 1) {
-    const [[ ele ]] = Object.entries(variants)
+Object.entries(transformativeReactions).forEach(([reaction, { multi, variants }]) => {
+  FormulaText[`${reaction}_multi`] = (o) => <span>{multi} * {f(o, 'transformative_level_multi')}</span>
+  if (variants.length === 1) {
+    const [ ele ] = variants
     FormulaText[`${reaction}_hit`] = (o) => <span>( 100% + {f(o, `transformative_dmg_`)} + {f(o, `${reaction}_dmg_`)} ) * {f(o, `${reaction}_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>  
   } else {
-    Object.keys(variants).forEach(ele => {
+    variants.forEach(ele => {
       FormulaText[`${ele}_${reaction}_hit`] = (o) => <span>( 100% + {f(o, `transformative_dmg_`)} + {f(o, `${reaction}_dmg_`)} ) * {f(o, `${reaction}_multi`)} * {f(o, `${ele}_enemyRes_multi`)}</span>  
     })    
   }
