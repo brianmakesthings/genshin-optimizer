@@ -106,12 +106,15 @@ export default class ArtifactDisplay extends React.Component {
     let locationDisplay
     if (!filterLocation) locationDisplay = <span>Location: Any</span>
     else if (filterLocation === "Inventory") locationDisplay = <span>Location: Inventory</span>
+    else if (filterLocation === "Equipped") locationDisplay = <span>Location: Equipped</span>
     else locationDisplay = <b>{Character.getName(filterLocation)}</b>
     let artifacts = Object.values(artifactDB).filter(art => {
-      if (filterLocation) {
-        if (filterLocation === "Inventory" && art.location) return false;
-        else if (filterLocation !== "Inventory" && filterLocation !== art.location) return false;
-      }
+      if (filterLocation === "Inventory") {
+        if (art.location) return false;
+      } else if (filterLocation === "Equipped") {
+        if (!art.location) return false;
+      } else if (filterLocation && filterLocation !== art.location) return false;
+
       if (filterArtSetKey && filterArtSetKey !== art.setKey) return false;
       if (filterSlotKey && filterSlotKey !== art.slotKey) return false
       if (filterMainStatKey && filterMainStatKey !== art.mainStatKey) return false
@@ -169,7 +172,7 @@ export default class ArtifactDisplay extends React.Component {
             <span>Artifact Filter</span>
             <Button size="sm" className="ml-2" variant="danger" onClick={this.ressetFilters} ><FontAwesomeIcon icon={faUndo} className="fa-fw" /> Reset</Button>
             <Button size="sm" className="ml-2" variant="danger" onClick={this.unequipAll} >Unequip Artifacts on every character</Button>
-            <span className="float-right text-right">Showing <b>{artifacts.length > maxNumArtifactsToDisplay ? maxNumArtifactsToDisplay : artifacts.length}</b> out of {totalArtNum} Artifacts</span>
+            <span className="float-right text-right">Showing <b>{artifacts.length > maxNumArtifactsToDisplay ? maxNumArtifactsToDisplay : artifacts.length}</b> out of {artifacts.length !== totalArtNum ? `${artifacts.length}/` : ""}{totalArtNum} Artifacts</span>
           </Card.Header>
           <Card.Body>
             <Row className="mb-n2">
@@ -290,6 +293,7 @@ export default class ArtifactDisplay extends React.Component {
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={() => this.setState({ filterLocation: "" })}>Unselect</Dropdown.Item>
                     <Dropdown.Item onClick={() => this.setState({ filterLocation: "Inventory" })}>Inventory</Dropdown.Item>
+                    <Dropdown.Item onClick={() => this.setState({ filterLocation: "Equipped" })}>Currently Equipped</Dropdown.Item>
                     <Dropdown.Divider />
                     <CharacterSelectionDropdownList onSelect={cid => this.setState({ filterLocation: cid })} />
                   </Dropdown.Menu>
